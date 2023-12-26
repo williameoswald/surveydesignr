@@ -39,7 +39,7 @@ Specify flex=TRUE (default) to output the table as a formatted flextable object.
 ```{r}
 xlsformfile <- "filepath to XLSForm here"
 
-table <- export_quest(xlsformfile,primary="English",secondary=NULL,flex=FALSE)
+quest_table <- export_quest(xlsformfile,primary="English",secondary=NULL,flex=FALSE)
 ```
 
 ### Output table to Word using Officer
