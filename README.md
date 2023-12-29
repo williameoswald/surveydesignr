@@ -34,15 +34,18 @@ argument and a second language as the secondary argument. Setting both primary
 and secondary to NULL will allow you to output a table for forms without any 
 language specified, i.e. with columns "label","hint", etc.
 
-Specify flex=TRUE (default) to output the table as a formatted flextable object.
 
 ```{r}
 xlsformfile <- "filepath to XLSForm here"
 
+# Specify flex=TRUE (default) to output the table as a formatted flextable object.
+quest_table <- export_quest(xlsformfile,primary="English",secondary=NULL)
+
+# Specify flex=FALSE to output the table as a tibble.
 quest_table <- export_quest(xlsformfile,primary="English",secondary=NULL,flex=FALSE)
 ```
 
-### Output table to Word using Officer
+### Output table to Word document using Officer
 ```{r}
 library(officer)
 text_style <- fp_text(font.size = 12, font.family = "Calibri", bold = TRUE)
