@@ -1,2 +1,3 @@
 .Rproj.user
-surveyDesignR.Rproj
+*.Rproj
+.DS_Store
