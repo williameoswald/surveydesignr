@@ -175,6 +175,7 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
             name=dplyr::if_else(dplyr::row_number()==1,name,NA_character_))
       }, error=function(error_message) {
         message(error_message)
+        message("Check that number of primary and secondary labels are equal")
         NULL
       }
     )
