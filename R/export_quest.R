@@ -10,17 +10,19 @@
 #' @export
 export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE){
 
+  # Import xlsform survey sheet
   xlsform <- readxl::read_xlsx(xlsformfile, sheet = "survey") %>%
     # Leave repeat and group in to flag these in text version, "end" rows dropped as blank labels
     # dplyr::filter(!stringr::str_detect(name, "note_"),
     #               !stringr::str_detect(name, "_chk"),
     #               !type %in% c("start","end","today","deviceid")) %>%
-    # Rename for SurveyCTO/ODK compatibility
+    # Rename fields for SurveyCTO/ODK compatibility
     dplyr::rename(any_of(c(relevant="relevance",read_only="read only"))) %>%
     dplyr::mutate(choices_name=dplyr::if_else(stringr::str_detect(type,"select"),
                                               stringr::str_sub(type, start=stringr::str_locate(type," ")[,1]+1, end=-1L),
                                               NA))
 
+  # Specify flextable formatting
   format_table <- function(flextab){
     flextab %>%
       flextable::flextable() %>%
@@ -44,7 +46,7 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
                              style = "Table Caption")
   }
 
-  # Primary specified
+  # Primary language specified
   if(!is.null(primary) & is.null(secondary)){
 
     label1txt <- paste0("label:",primary)
@@ -92,7 +94,7 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
 
   }
 
-  # Primary and Secondary specified
+  # Primary and Secondary languages specified
   if(!is.null(primary) & !is.null(secondary)){
 
     label1txt <- paste0("label:",primary)
@@ -100,7 +102,7 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
     label2txt <- paste0("label:",secondary)
     label2txt_ <- dplyr::ensym(label2txt)
 
-    # Create dataframe with questions, choices, relevance, constraints, and calcs
+    # Create primary language dataframe 
     quest1 <- xlsform %>%
       dplyr::select(name,contains(primary),
                     any_of(c("relevant","constraint","read_only","calculation")),
@@ -129,7 +131,7 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
       dplyr::select(-choice) %>%
       dplyr::relocate(name,value,description)
 
-    # Create dataframe with questions, choices, relevance, constraints, and calcs
+    # Create secondary language dataframe 
     quest2 <- xlsform %>%
       dplyr::mutate(choices_name=dplyr::if_else(stringr::str_detect(type,"select"),
                                          stringr::str_sub(type, start=stringr::str_locate(type," ")[,1]+1, end=-1L),
@@ -163,6 +165,7 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
 
     tryCatch(
       {
+        # Merge primary and secondary dataframes, will fail if numbers of rows differ
         quest <- dplyr::bind_cols(quest1 %>%
                                     dplyr::rename(value1=value),
                            quest2 %>%
@@ -190,7 +193,7 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
 
   }
 
-  # Language not specified (i.e. label,hint,constraint)
+  # Create dataframe if language not specified in form (i.e. label,hint,constraint)
   if(is.null(primary) & is.null(secondary)){
 
     # Create dataframe with questions, choices, relevance, constraints, and calcs
@@ -231,4 +234,3 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
   }
   return(quest)
 }
-# Figure out relevant versus relevance and compare other column names ODK vs SurveyCTO
