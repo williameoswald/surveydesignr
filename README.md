@@ -71,6 +71,9 @@ form2location <- "filepath to second XLSForm here"
 
 # Name output of function "full_compare""
 full_compare <- compare_survey(form1location,form2location,language)
+
+# Flextable of content comparison
+tabulate_comparison(full_compare,1)
 ```
 
 ### compare_survey function tabulates differences between forms for the following checks:
@@ -104,6 +107,7 @@ tabulate_comparison(12)
 ```
 
 ### To do:
+ - Revise comparison function to allow for forms without language specification
  - Add comparison of choices tab
  - Make cleaner output
  - Functionalise repeated actions 
