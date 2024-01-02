@@ -10,7 +10,7 @@ devtools::install_github("williameoswald/surveyDesignR")
 
 Load libraries:
 ```{r}
-library("surveyDesignR")
+library("surveydesignr")
 library("tidyverse")
 library("readxl")
 library("flextable")
