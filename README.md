@@ -1,4 +1,4 @@
-# surveyDesignR
+# surveydesignr
 
 Package contains tools to support design of questionnaires in [XLSForm](https://xlsform.org/en/).
 
