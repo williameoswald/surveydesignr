@@ -1,10 +1,10 @@
 Package: surveyDesignR
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: XLSForm tools
+Version: 0.1.0
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+    person("William", "Oswald", , "williameoswald@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-5287-2834"))
+Description: Tools to support design and use of questionnaires programmed in XLSForm 
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
