@@ -1,6 +1,6 @@
 # surveydesignr
 
-Package contains tools to support design of questionnaires in [XLSForm](https://xlsform.org/en/).
+Package contains tools to support design and use of questionnaires programmed in [XLSForm](https://xlsform.org/en/).
 
 ## Download and install package
 Download the library from Github:
