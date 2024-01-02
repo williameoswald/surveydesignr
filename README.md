@@ -5,7 +5,7 @@ Package contains tools to support design of questionnaires in [XLSForm](https://
 ## Download and install package
 Download the library from Github:
 ```{r}
-devtools::install_github("williameoswald/surveyDesignR")
+devtools::install_github("williameoswald/surveydesignr")
 ```
 
 Load libraries:
