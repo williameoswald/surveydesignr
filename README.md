@@ -12,6 +12,7 @@ Load libraries:
 ```{r}
 library("surveydesignr")
 library("tidyverse")
+library("janitor")
 library("readxl")
 library("flextable")
 library("stringr")
