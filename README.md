@@ -48,7 +48,7 @@ quest_table <- export_quest(xlsformfile,primary="English",secondary=NULL,flex=FA
 
 ### Output table to Word document using Officer
 ```{r}
-library(officer)
+library("officer")
 library("flextable")
 text_style <- fp_text(font.size = 12, font.family = "Calibri", bold = TRUE)
 par_style <- fp_par(text.align = "justify")
