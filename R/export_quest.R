@@ -10,6 +10,14 @@
 #' @export
 export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE){
 
+  # Call languages in lower case
+  if(!is.null(primary)) {
+    primary <- stringr::str_to_lower(primary)
+  }
+  if(!is.null(secondary)) {
+    secondary <- stringr::str_to_lower(secondary)
+  }  
+  
   # Import xlsform survey sheet
   xlsform <- readxl::read_xlsx(xlsformfile, sheet = "survey") %>%
     # Leave repeat and group in to flag these in text version, "end" rows dropped as blank labels
@@ -18,6 +26,8 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
     #               !type %in% c("start","end","today","deviceid")) %>%
     # Rename fields for SurveyCTO/ODK compatibility
     dplyr::rename(any_of(c(relevant="relevance",read_only="read only"))) %>%
+    # Replace colons with underscore
+    janitor::clean_names() %>% 
     dplyr::mutate(choices_name=dplyr::if_else(stringr::str_detect(type,"select"),
                                               stringr::str_sub(type, start=stringr::str_locate(type," ")[,1]+1, end=-1L),
                                               NA))
@@ -49,7 +59,7 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
   # Primary language specified
   if(!is.null(primary) & is.null(secondary)){
 
-    label1txt <- paste0("label:",primary)
+    label1txt <- paste0("label_",primary)
     label1txt_ <- dplyr::ensym(label1txt)
 
     # Create dataframe with questions, choices, relevance, constraints, and calcs
@@ -60,19 +70,23 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
       dplyr::relocate(relevant,.before = constraint) %>%
       tidyr::pivot_longer(cols = -c(name),
                    names_to = "description") %>%
-      dplyr::filter(!is.na(value)) %>%
+      dplyr::filter(!is.na(value)) %>% 
       dplyr::left_join(readxl::read_xlsx(xlsformfile, sheet = "choices") %>%
+                         # Rename fields for SurveyCTO/ODK compatibility, name used in ODK
+                         dplyr::rename(any_of(c(name="value"))) %>%
+                         # Replace colons with underscore
+                         janitor::clean_names() %>% 
                          dplyr::filter(!is.na(list_name)) %>%
-                         dplyr::select(list_name,value,!!label1txt_) %>%
+                         dplyr::select(list_name,name,!!label1txt_) %>%
                          dplyr::rename(label=!!label1txt_) %>%
-                         dplyr::mutate(choice=paste0(as.character(value)," ",label)) %>%
+                         dplyr::mutate(choice=paste0(as.character(name)," ",label)) %>%
                          dplyr::select(list_name,choice),
                 by=c("value"="list_name"),
                 relationship = "many-to-many") %>%
       dplyr::mutate(value=dplyr::if_else(description=="choices_name",
                            choice,
                            value),
-             description=stringr::str_replace(description,paste0(":",primary),""),
+             description=stringr::str_replace(description,paste0("_",primary),""),
              value=dplyr::if_else(description %in%
                              c("hint","constraint","relevant",
                                "calculation","read_only"),
@@ -97,9 +111,9 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
   # Primary and Secondary languages specified
   if(!is.null(primary) & !is.null(secondary)){
 
-    label1txt <- paste0("label:",primary)
+    label1txt <- paste0("label_",primary)
     label1txt_ <- dplyr::ensym(label1txt)
-    label2txt <- paste0("label:",secondary)
+    label2txt <- paste0("label_",secondary)
     label2txt_ <- dplyr::ensym(label2txt)
 
     # Create primary language dataframe 
@@ -112,17 +126,21 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
                    names_to = "description") %>%
       dplyr::filter(!is.na(value)) %>%
       dplyr::left_join(readxl::read_xlsx(xlsformfile, sheet = "choices") %>%
+                         # Rename fields for SurveyCTO/ODK compatibility, name used in ODK
+                         dplyr::rename(any_of(c(name="value"))) %>%
+                         # Replace colons with underscore
+                         janitor::clean_names() %>% 
                          dplyr::filter(!is.na(list_name)) %>%
-                         dplyr::select(list_name,value,!!label1txt_) %>%
+                         dplyr::select(list_name,name,!!label1txt_) %>%
                          dplyr::rename(label=!!label1txt_) %>%
-                         dplyr::mutate(choice=paste0(as.character(value)," ",label)) %>%
+                         dplyr::mutate(choice=paste0(as.character(name)," ",label)) %>%
                          dplyr::select(list_name,choice),
                 by=c("value"="list_name"),
                 relationship = "many-to-many") %>%
       dplyr::mutate(value=dplyr::if_else(description=="choices_name",
                            choice,
                            value),
-             description=stringr::str_replace(description,paste0(":",primary),""),
+             description=stringr::str_replace(description,paste0("_",primary),""),
              value=dplyr::if_else(description %in%
                              c("hint","constraint","relevant",
                                "calculation","read only"),
@@ -144,17 +162,21 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
                    names_to = "description") %>%
       dplyr::filter(!is.na(value)) %>%
       dplyr::left_join(readxl::read_xlsx(xlsformfile, sheet = "choices") %>%
+                         # Rename fields for SurveyCTO/ODK compatibility, name used in ODK
+                         dplyr::rename(any_of(c(name="value"))) %>%
+                         # Replace colons with underscore
+                         janitor::clean_names() %>% 
                          dplyr::filter(!is.na(list_name)) %>%
-                         dplyr::select(list_name,value,!!label2txt_) %>%
+                         dplyr::select(list_name,name,!!label2txt_) %>%
                          dplyr::rename(label=!!label2txt_) %>%
-                         dplyr::mutate(choice=paste0(as.character(value)," ",label)) %>%
+                         dplyr::mutate(choice=paste0(as.character(name)," ",label)) %>%
                          dplyr::select(list_name,choice),
                 by=c("value"="list_name"),
                 relationship = "many-to-many") %>%
       dplyr::mutate(value=dplyr::if_else(description=="choices_name",
                            choice,
                            value),
-             description=stringr::str_replace(description,paste0(":",secondary),""),
+             description=stringr::str_replace(description,paste0("_",secondary),""),
              value=dplyr::if_else(description %in%
                              c("hint","constraint","relevant",
                                "calculation","read_only"),
@@ -204,8 +226,10 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
                    names_to = "description") %>%
       dplyr::filter(!is.na(value)) %>%
       dplyr::left_join(readxl::read_xlsx(xlsformfile, sheet = "choices") %>%
+                         # Rename fields for SurveyCTO/ODK compatibility, name used in ODK
+                         dplyr::rename(any_of(c(name="value"))) %>%
                          dplyr::filter(!is.na(list_name)) %>%
-                         dplyr::mutate(choice=paste0(as.character(value)," ",label)) %>%
+                         dplyr::mutate(choice=paste0(as.character(name)," ",label)) %>%
                          dplyr::select(list_name,choice),
                 by=c("value"="list_name"),
                 relationship = "many-to-many") %>%
