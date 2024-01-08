@@ -1,6 +1,6 @@
 Package: surveydesignr
 Title: XLSForm Design Tools
-Version: 0.1.0
+Version: 0.1.1
 Date: 2024-01-02
 Authors@R: 
     person("William", "Oswald", , "williameoswald@gmail.com", role = c("aut", "cre"),
