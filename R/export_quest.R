@@ -8,7 +8,7 @@
 #' @return Large flextable or tibble.
 #' @importFrom magrittr "%>%"
 #' @export
-export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE){
+export_quest <- function(xlsformfile,primary="english",secondary=NULL,flex=TRUE){
 
   # Call languages in lower case
   if(!is.null(primary)) {
@@ -21,9 +21,6 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
   # Import xlsform survey sheet
   xlsform <- readxl::read_xlsx(xlsformfile, sheet = "survey") %>%
     # Leave repeat and group in to flag these in text version, "end" rows dropped as blank labels
-    # dplyr::filter(!stringr::str_detect(name, "note_"),
-    #               !stringr::str_detect(name, "_chk"),
-    #               !type %in% c("start","end","today","deviceid")) %>%
     # Rename fields for SurveyCTO/ODK compatibility
     dplyr::rename(any_of(c(relevant="relevance",read_only="read only"))) %>%
     # Replace colons with underscore
@@ -52,7 +49,10 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
                                                             dplyr::pull(form_title)),
                                     ", Version: ",
                                     readxl::read_xlsx(xlsformfile, sheet = "settings") %>%
-                                      dplyr::pull(version)),
+                                      dplyr::select(any_of(c("version"))) %>% 
+                                      {
+                                        if("version" %in% names(.)) dplyr::pull(.) else .
+                                      }),
                              style = "Table Caption")
   }
 
@@ -103,7 +103,7 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
       quest <- quest %>%
         format_table %>%
         flextable::set_header_labels("name"="Variable name",
-                          "value1"="Question or Calculation")
+                          "value"="Question or Calculation")
       }
 
   }
@@ -252,7 +252,7 @@ export_quest <- function(xlsformfile,primary="English",secondary=NULL,flex=TRUE)
       quest <- quest %>%
         format_table %>%
         flextable::set_header_labels("name"="Variable name",
-                                       "value"="Question or Calculation")
+                                     "value"="Question or Calculation")
     }
 
   }
