@@ -20,20 +20,13 @@ library("stringr")
 
 ## export_quest
 
-Function for importing a [XLSForm](https://xlsform.org/en/) and creating a
-readable dataframe or flextable object that lists variable names, labels in up
-to two languages, relevancies, constraints, and calculate fields. Output objects
-can be easily exported to Microsoft Word using Officer, ultimately allowing for questionnaires to be directly programmed in XLSform and then easily shared and reviewed by collaborators or included in protocol or other text documents.
+Function for importing a [XLSForm](https://xlsform.org/en/) and creating a readable dataframe or flextable object that lists variable names, labels in up to two languages, relevancies, constraints, and calculate fields. Output objects can be easily exported to Microsoft Word using Officer, ultimately allowing for questionnaires to be directly programmed in XLSform and then easily shared and reviewed by collaborators or included in protocol or other text documents.
 
 ### Your inputs
 
-If XLSform includes multiple languages, you can choose the language to output
-by specifying the primary argument. For example, specifying "English" as the 
-primary argument means function will use columns containing "label:English",
-"hint:English", etc. To output second language side-by-side, specify the primary
-argument and a second language as the secondary argument. Setting both primary 
-and secondary to NULL will allow you to output a table for forms without any 
-language specified, i.e. with columns "label","hint", etc.
+If XLSform includes multiple languages, you can choose the language to output by specifying the primary argument. For example, specifying "English" as the primary argument means function will use columns containing "label::English", "hint::English", etc., ignoring capitalisation. To output a second language side-by-side, specify the primary argument and a second language as the secondary argument. Please note that if your label column name includes spaces or other punctuation (e.g. "label::English (en)") the function will remove these and replace with underscores ("_"), so you will need to input "English_en".
+
+Setting both primary and secondary to NULL will allow you to output a table for forms without any language specified, i.e. with columns "label","hint", etc.
 
 
 ```{r}
@@ -109,6 +102,7 @@ tabulate_comparison(12)
 ```
 
 ### To do:
+ - Add display of question type (select_one, select_multiple) and constraint message to table
  - Revise comparison function to allow for forms without language specification
  - Add comparison of choices tab
  - Make cleaner output
