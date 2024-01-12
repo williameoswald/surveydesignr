@@ -47,7 +47,7 @@ text_style <- fp_text(font.size = 12, font.family = "Calibri", bold = TRUE)
 par_style <- fp_par(text.align = "justify")
 
 read_docx() %>% body_remove() %>% 
-  body_add_flextable(autofit(quest_table)) %>%
+  body_add_flextable(quest_table) %>%
   print(target = paste0("questionnaire.docx"))
 
 ```
