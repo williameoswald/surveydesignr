@@ -89,7 +89,7 @@ export_quest <- function(xlsformfile,primary="english",secondary=NULL,flex=TRUE)
              description=stringr::str_replace(description,paste0("_",primary),""),
              value=dplyr::if_else(description %in%
                              c("hint","constraint","relevant",
-                               "calculation","read_only"),
+                               "calculation","read_only","constraint_message"),
                            paste0(stringr::str_to_title(description),": ",value),
                            value)) %>%
       dplyr::select(-choice) %>%
@@ -143,7 +143,7 @@ export_quest <- function(xlsformfile,primary="english",secondary=NULL,flex=TRUE)
              description=stringr::str_replace(description,paste0("_",primary),""),
              value=dplyr::if_else(description %in%
                              c("hint","constraint","relevant",
-                               "calculation","read only"),
+                               "calculation","read_only","constraint_message"),
                            paste0(stringr::str_to_title(description),": ",value),
                            value)) %>%
       dplyr::select(-choice) %>%
@@ -179,7 +179,7 @@ export_quest <- function(xlsformfile,primary="english",secondary=NULL,flex=TRUE)
              description=stringr::str_replace(description,paste0("_",secondary),""),
              value=dplyr::if_else(description %in%
                              c("hint","constraint","relevant",
-                               "calculation","read_only"),
+                               "calculation","read_only","constraint_message"),
                            paste0(stringr::str_to_title(description),": ",value),
                            value)) %>%
       dplyr::select(-choice) %>%
@@ -238,7 +238,7 @@ export_quest <- function(xlsformfile,primary="english",secondary=NULL,flex=TRUE)
                            value),
                     value=dplyr::if_else(description %in%
                                            c("hint","constraint","relevance",
-                                             "calculation","read only"),
+                                             "calculation","read_only","constraint_message"),
                                          paste0(stringr::str_to_title(description),": ",value),
                                          value)) %>%
       dplyr::select(-choice) %>%
