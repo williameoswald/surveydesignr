@@ -8,7 +8,7 @@
 #' @return Large flextable or tibble.
 #' @importFrom magrittr "%>%"
 #' @export
-export_quest <- function(xlsformfile,primary="english",secondary=NULL,flex=TRUE){
+export_quest <- function(xlsformfile,primary=NULL,secondary=NULL,flex=TRUE){
 
   # Call languages in lower case
   if(!is.null(primary)) {
@@ -25,26 +25,30 @@ export_quest <- function(xlsformfile,primary="english",secondary=NULL,flex=TRUE)
     dplyr::rename(any_of(c(relevant="relevance",read_only="read only"))) %>%
     # Replace colons with underscore
     janitor::clean_names() %>% 
-    dplyr::mutate(choices_name=dplyr::if_else(stringr::str_detect(type,"select"),
+    dplyr::mutate(choices=dplyr::if_else(stringr::str_detect(type,"select"),
                                               stringr::str_sub(type, start=stringr::str_locate(type," ")[,1]+1, end=-1L),
-                                              NA))
+                                              NA),
+                  choice_type=dplyr::if_else(stringr::str_detect(type,"select"),
+                                             stringr::str_sub(type, start=stringr::str_locate(type,"_")[,1]+1, end=stringr::str_locate(type," ")[,1]-1),
+                                             NA),
+                  choice_type=dplyr::if_else(stringr::str_detect(choice_type,"one"),"SELECT ONE","SELECT MULTIPLE"))
 
   # Specify flextable formatting
   format_table <- function(flextab){
     flextab %>%
       flextable::flextable() %>%
-      flextable::align(align="right", part="body") %>%
       flextable::align(align="left", part="header") %>%
       flextable::fontsize(size=10, part="all") %>%
       flextable::font(fontname="Calibri", part="all") %>%
       flextable::bold(bold=TRUE, part="header") %>%
-      flextable::bold(~ description=="label",2) %>%
-      flextable::align(~ description=="label",2, align="left") %>%
-      flextable::align(i=NULL,j="name", align="left", part="body") %>%
+      flextable::bold(~ description=="Label:",bold=TRUE, 2) %>%
+      flextable::bold(i=NULL,j="description", bold=TRUE, part="body") %>%
+      flextable::align(i=NULL,j="description", align="right", part="body") %>%
+      flextable::align(i=NULL,j="name", align="left", part="all") %>%
       flextable::set_table_properties(layout="autofit") %>%
       flextable::height(height=0.7, part="body", unit="cm") %>%
       flextable::hline(i = ~is_last_val_in_group == TRUE) %>%
-      flextable::delete_columns(c("description","is_last_val_in_group")) %>%
+      flextable::delete_columns(c("is_last_val_in_group")) %>%
       flextable::set_caption(paste0(stringr::str_to_title(readxl::read_xlsx(xlsformfile, sheet = "settings") %>%
                                                             dplyr::pull(form_title)),
                                     ", Version: ",
@@ -56,20 +60,24 @@ export_quest <- function(xlsformfile,primary="english",secondary=NULL,flex=TRUE)
                              style = "Table Caption")
   }
 
-  # Primary language specified
-  if(!is.null(primary) & is.null(secondary)){
-
-    label1txt <- paste0("label_",primary)
-    label1txt_ <- dplyr::ensym(label1txt)
-
-    # Create dataframe with questions, choices, relevance, constraints, and calcs
+  # Get questionnaire function - 
+  # Creates dataframe with questions, choices, relevance, constraints, and calcs
+  # based on specified language, e.g.  NULL or "english"
+  get_quest <- function(language){
+    
+    labeltxt <- paste0("label",dplyr::if_else(is.null(language),"","_"),language)
+    hinttxt <- paste0("hint",dplyr::if_else(is.null(language),"","_"),language)
+    cmtxt <- paste0("constraint_message",dplyr::if_else(is.null(language),"","_"),language)
+    labeltxt_ <- dplyr::ensym(labeltxt)
+    
     quest <- xlsform %>%
-      dplyr::select(name,contains(primary),
-                    any_of(c("relevant","constraint","read_only","calculation")),
-                    choices_name) %>%
-      dplyr::relocate(relevant,.before = constraint) %>%
+      dplyr::select(name,any_of(c(matches(labeltxt),matches(hinttxt),matches(cmtxt))),
+                    any_of(c("relevant","read_only","calculation","constraint")),
+                    choice_type,choices) %>% 
+      dplyr::relocate(any_of(matches("constraint")),.after = tidyselect::last_col()) %>% 
+      dplyr::relocate(any_of(contains("constraint_message")),.after = any_of(c("constraint"))) %>% 
       tidyr::pivot_longer(cols = -c(name),
-                   names_to = "description") %>%
+                          names_to = "description") %>% 
       dplyr::filter(!is.na(value)) %>% 
       dplyr::left_join(readxl::read_xlsx(xlsformfile, sheet = "choices") %>%
                          # Rename fields for SurveyCTO/ODK compatibility, name used in ODK
@@ -77,113 +85,56 @@ export_quest <- function(xlsformfile,primary="english",secondary=NULL,flex=TRUE)
                          # Replace colons with underscore
                          janitor::clean_names() %>% 
                          dplyr::filter(!is.na(list_name)) %>%
-                         dplyr::select(list_name,name,!!label1txt_) %>%
-                         dplyr::rename(label=!!label1txt_) %>%
+                         dplyr::select(list_name,name,!!labeltxt_) %>%
+                         dplyr::rename(label=!!labeltxt_) %>%
                          dplyr::mutate(choice=paste0(as.character(name)," ",label)) %>%
                          dplyr::select(list_name,choice),
-                by=c("value"="list_name"),
-                relationship = "many-to-many") %>%
-      dplyr::mutate(value=dplyr::if_else(description=="choices_name",
-                           choice,
-                           value),
-             description=stringr::str_replace(description,paste0("_",primary),""),
-             value=dplyr::if_else(description %in%
-                             c("hint","constraint","relevant",
-                               "calculation","read_only","constraint_message"),
-                           paste0(stringr::str_to_title(description),": ",value),
-                           value)) %>%
+                       by=c("value"="list_name"),
+                       relationship = "many-to-many") %>% 
+      dplyr::rowwise() %>% 
+      dplyr::mutate(value=dplyr::if_else(description=="choices",
+                                         choice,
+                                         value),
+                    description=dplyr::if_else(is.null(language),
+                                               description,
+                                               stringr::str_replace(description,paste0("_",language),""))) %>% 
       dplyr::select(-choice) %>%
-      dplyr::relocate(name,value,description) %>%
-      dplyr::group_by(name) %>%
-      dplyr::mutate(
-        is_last_val_in_group = dplyr::row_number() == max(dplyr::row_number()),
-        name=dplyr::if_else(dplyr::row_number()==1,name,NA_character_))
-
+      dplyr::relocate(name,description,value) 
+    
+      return(quest)
+  }
+  
+  # No language specified (i.e. language=NULL) or only PRIMARY specified (i.e. language=primary)
+  if((is.null(primary) & is.null(secondary))|(!is.null(primary) & is.null(secondary))){
+    
+    quest <- get_quest(primary)
+    
     if(isTRUE(flex)){
-      quest <- quest %>%
+      quest <- quest  %>%
+        dplyr::group_by(name) %>%
+        dplyr::mutate(
+          description=dplyr::if_else(description %in%
+                                       c("choices"),
+                                     "",
+                                     paste0(stringr::str_to_title(stringr::str_replace(description,"_"," ")),":")),
+          is_last_val_in_group = dplyr::row_number() == max(dplyr::row_number()),
+          name=dplyr::if_else(dplyr::row_number()==1,name,NA_character_)) %>%
         format_table %>%
         flextable::set_header_labels("name"="Variable name",
-                          "value"="Question or Calculation")
-      }
-
+                                     "description"="",
+                                     "value"="Question or Calculation")
+    }
+    
   }
 
   # Primary and Secondary languages specified
   if(!is.null(primary) & !is.null(secondary)){
 
-    label1txt <- paste0("label_",primary)
-    label1txt_ <- dplyr::ensym(label1txt)
-    label2txt <- paste0("label_",secondary)
-    label2txt_ <- dplyr::ensym(label2txt)
-
     # Create primary language dataframe 
-    quest1 <- xlsform %>%
-      dplyr::select(name,contains(primary),
-                    any_of(c("relevant","constraint","read_only","calculation")),
-                    choices_name) %>%
-      dplyr::relocate(relevant,.before = constraint) %>%
-      tidyr::pivot_longer(cols = -c(name),
-                   names_to = "description") %>%
-      dplyr::filter(!is.na(value)) %>%
-      dplyr::left_join(readxl::read_xlsx(xlsformfile, sheet = "choices") %>%
-                         # Rename fields for SurveyCTO/ODK compatibility, name used in ODK
-                         dplyr::rename(any_of(c(name="value"))) %>%
-                         # Replace colons with underscore
-                         janitor::clean_names() %>% 
-                         dplyr::filter(!is.na(list_name)) %>%
-                         dplyr::select(list_name,name,!!label1txt_) %>%
-                         dplyr::rename(label=!!label1txt_) %>%
-                         dplyr::mutate(choice=paste0(as.character(name)," ",label)) %>%
-                         dplyr::select(list_name,choice),
-                by=c("value"="list_name"),
-                relationship = "many-to-many") %>%
-      dplyr::mutate(value=dplyr::if_else(description=="choices_name",
-                           choice,
-                           value),
-             description=stringr::str_replace(description,paste0("_",primary),""),
-             value=dplyr::if_else(description %in%
-                             c("hint","constraint","relevant",
-                               "calculation","read_only","constraint_message"),
-                           paste0(stringr::str_to_title(description),": ",value),
-                           value)) %>%
-      dplyr::select(-choice) %>%
-      dplyr::relocate(name,value,description)
-
+    quest1 <- get_quest(primary)
+    
     # Create secondary language dataframe 
-    quest2 <- xlsform %>%
-      dplyr::mutate(choices_name=dplyr::if_else(stringr::str_detect(type,"select"),
-                                         stringr::str_sub(type, start=stringr::str_locate(type," ")[,1]+1, end=-1L),
-                                  NA)) %>%
-      dplyr::select(name,contains(secondary),
-                    any_of(c("relevant","constraint","read_only","calculation")),
-                    choices_name) %>%
-      dplyr::relocate(relevant,.before = constraint) %>%
-      tidyr::pivot_longer(cols = -c(name),
-                   names_to = "description") %>%
-      dplyr::filter(!is.na(value)) %>%
-      dplyr::left_join(readxl::read_xlsx(xlsformfile, sheet = "choices") %>%
-                         # Rename fields for SurveyCTO/ODK compatibility, name used in ODK
-                         dplyr::rename(any_of(c(name="value"))) %>%
-                         # Replace colons with underscore
-                         janitor::clean_names() %>% 
-                         dplyr::filter(!is.na(list_name)) %>%
-                         dplyr::select(list_name,name,!!label2txt_) %>%
-                         dplyr::rename(label=!!label2txt_) %>%
-                         dplyr::mutate(choice=paste0(as.character(name)," ",label)) %>%
-                         dplyr::select(list_name,choice),
-                by=c("value"="list_name"),
-                relationship = "many-to-many") %>%
-      dplyr::mutate(value=dplyr::if_else(description=="choices_name",
-                           choice,
-                           value),
-             description=stringr::str_replace(description,paste0("_",secondary),""),
-             value=dplyr::if_else(description %in%
-                             c("hint","constraint","relevant",
-                               "calculation","read_only","constraint_message"),
-                           paste0(stringr::str_to_title(description),": ",value),
-                           value)) %>%
-      dplyr::select(-choice) %>%
-      dplyr::relocate(name,value,description)
+    quest2 <- get_quest(secondary)
 
     tryCatch(
       {
@@ -193,11 +144,8 @@ export_quest <- function(xlsformfile,primary="english",secondary=NULL,flex=TRUE)
                            quest2 %>%
                              dplyr::select(value) %>%
                              dplyr::rename(value2=value)) %>%
-          dplyr::relocate(name,value1,value2,description) %>%
-          dplyr::group_by(name) %>%
-          dplyr::mutate(
-            is_last_val_in_group = dplyr::row_number() == max(dplyr::row_number()),
-            name=dplyr::if_else(dplyr::row_number()==1,name,NA_character_))
+          dplyr::relocate(name,description,value1,value2)
+        
       }, error=function(error_message) {
         message(error_message)
         message(" Are there any missing translations? Check that number of primary and secondary language label rows are equal.")
@@ -206,7 +154,15 @@ export_quest <- function(xlsformfile,primary="english",secondary=NULL,flex=TRUE)
     )
 
     if(isTRUE(flex)){
-      quest <- quest %>%
+      quest <- quest  %>%
+        dplyr::group_by(name) %>%
+        dplyr::mutate(
+          description=dplyr::if_else(description %in%
+                                       c("choices"),
+                                     "",
+                                     paste0(stringr::str_to_title(stringr::str_replace(description,"_"," ")),":")),
+          is_last_val_in_group = dplyr::row_number() == max(dplyr::row_number()),
+          name=dplyr::if_else(dplyr::row_number()==1,name,NA_character_)) %>%
         format_table %>%
         flextable::set_header_labels("name"="Variable name",
                           "value1"="Question or Calculation",
@@ -215,46 +171,5 @@ export_quest <- function(xlsformfile,primary="english",secondary=NULL,flex=TRUE)
 
   }
 
-  # Create dataframe if language not specified in form (i.e. label,hint,constraint)
-  if(is.null(primary) & is.null(secondary)){
-
-    # Create dataframe with questions, choices, relevance, constraints, and calcs
-    quest <- xlsform %>%
-      dplyr::select(name,label,any_of(c("relevant","constraint",
-             "read_only","calculation")),choices_name) %>%
-      tidyr::pivot_longer(cols = -c(name),
-                   names_to = "description") %>%
-      dplyr::filter(!is.na(value)) %>%
-      dplyr::left_join(readxl::read_xlsx(xlsformfile, sheet = "choices") %>%
-                         # Rename fields for SurveyCTO/ODK compatibility, name used in ODK
-                         dplyr::rename(any_of(c(name="value"))) %>%
-                         dplyr::filter(!is.na(list_name)) %>%
-                         dplyr::mutate(choice=paste0(as.character(name)," ",label)) %>%
-                         dplyr::select(list_name,choice),
-                by=c("value"="list_name"),
-                relationship = "many-to-many") %>%
-      dplyr::mutate(value=dplyr::if_else(description=="choices_name",
-                           choice,
-                           value),
-                    value=dplyr::if_else(description %in%
-                                           c("hint","constraint","relevance",
-                                             "calculation","read_only","constraint_message"),
-                                         paste0(stringr::str_to_title(description),": ",value),
-                                         value)) %>%
-      dplyr::select(-choice) %>%
-      dplyr::relocate(name,value,description) %>%
-      dplyr::group_by(name) %>%
-      dplyr::mutate(
-        is_last_val_in_group = dplyr::row_number() == max(dplyr::row_number()),
-        name=dplyr::if_else(dplyr::row_number()==1,name,NA_character_))
-
-    if(isTRUE(flex)){
-      quest <- quest %>%
-        format_table %>%
-        flextable::set_header_labels("name"="Variable name",
-                                     "value"="Question or Calculation")
-    }
-
-  }
   return(quest)
 }

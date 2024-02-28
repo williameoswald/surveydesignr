@@ -4,7 +4,7 @@
 \alias{export_quest}
 \title{Export dataframe or flextable with readable version of xlsform questionnaire}
 \usage{
-export_quest(xlsformfile, primary = "english", secondary = NULL, flex = TRUE)
+export_quest(xlsformfile, primary = NULL, secondary = NULL, flex = TRUE)
 }
 \arguments{
 \item{xlsformfile}{Filepath of xlsform as text or referring to object with filepath.}

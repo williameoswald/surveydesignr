@@ -1,7 +1,7 @@
 Package: surveydesignr
 Title: XLSForm Design Tools
-Version: 0.1.1
-Date: 2024-01-08
+Version: 0.1.2
+Date: 2024-02-28
 Authors@R: 
     person("William", "Oswald", , "williameoswald@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-5287-2834"))
