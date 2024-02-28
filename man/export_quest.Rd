@@ -9,7 +9,7 @@ export_quest(xlsformfile, primary = NULL, secondary = NULL, flex = TRUE)
 \arguments{
 \item{xlsformfile}{Filepath of xlsform as text or referring to object with filepath.}
 
-\item{primary}{Main language defined in form. Specified as "label:English", etc.}
+\item{primary}{Main language defined in form. Specified as "label:English", etc. Use primary=NULL (default) if no language specified ("label").}
 
 \item{secondary}{Specify any secondary language of the form. Form can have more than one, but this will only check one at a time. (e.g. "Francais") Entered text must match language specification in the XLSForm columns.}
 
