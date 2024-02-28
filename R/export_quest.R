@@ -2,7 +2,7 @@
 #'
 #' This function imports a XLSForm file and exports either a dataframe (tibble) or a flextable object with a readable version of questionnaire.
 #' @param xlsformfile Filepath of xlsform as text or referring to object with filepath.
-#' @param primary Main language defined in form. Specified as "label:English", etc.
+#' @param primary Main language defined in form. Specified as "label:English", etc. Use primary=NULL (default) if no language specified ("label").
 #' @param secondary Specify any secondary language of the form. Form can have more than one, but this will only check one at a time. (e.g. "Francais") Entered text must match language specification in the XLSForm columns.
 #' @param flex Specify whether flextable object is output (default) or tibble object
 #' @return Large flextable or tibble.
