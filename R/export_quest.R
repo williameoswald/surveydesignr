@@ -167,7 +167,7 @@ export_quest <- function(xlsformfile,primary=NULL,secondary=NULL,flex=TRUE){
         flextable::set_header_labels("name"="Variable name",
                                      "description"="",
                                      "value1"="Question or Calculation",
-                                     "value2"=paste0(stringr::str_to_title(secondary))
+                                     "value2"=secondary)
       }
 
   }
