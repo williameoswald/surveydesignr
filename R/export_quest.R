@@ -165,8 +165,9 @@ export_quest <- function(xlsformfile,primary=NULL,secondary=NULL,flex=TRUE){
           name=dplyr::if_else(dplyr::row_number()==1,name,NA_character_)) %>%
         format_table %>%
         flextable::set_header_labels("name"="Variable name",
-                          "value1"="Question or Calculation",
-                          "value2"=secondary)
+                                     "description"="",
+                                     "value1"="Question or Calculation",
+                                     "value2"=secondary)
       }
 
   }
